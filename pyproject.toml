@@ -8,6 +8,22 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = [
+    "ipykernel>=7.3.0",
     "pre-commit>=4.6.0",
     "ty>=0.0.58",
 ]
+data = [
+    "pandas>=3.0.3",
+    "numpy>=1.25",
+    "transformers>=4.35.0",
+    "datasets>=2.14.0",
+    "evaluate>=0.4.0",
+    "kedro>=1.5.0",
+    "scikit-learn>=1.9.0",
+]
+
+[tool.kedro]
+package_name = "src"
+project_name = "technical-exercise"
+kedro_init_version = "1.5.0"
+source_dir = "."

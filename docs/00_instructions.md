@@ -15,7 +15,8 @@ Deploy the trained model locally so that it can serve predictions with p99 laten
 Not needed for this case, but ensure your solution can be easily deployed to a cloud environment.
 Ensure appropriate logging and monitoring is in place.
 Submit your solution via Github.
-What Are We Looking For?
+
+## What Are We Looking For?
 
 We want to give you the opportunity to show off your software engineering, system design skills and coding best practices.
 
