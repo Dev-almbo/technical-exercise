@@ -11,6 +11,7 @@ dev = [
     "ipykernel>=7.3.0",
     "pre-commit>=4.6.0",
     "ty>=0.0.58",
+    "pytest>=8.0.0",
 ]
 data = [
     "pandas>=2.0,<3",
@@ -27,6 +28,10 @@ data = [
 api = [
     "fastapi>=0.139.0",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
 
 [tool.kedro]
 package_name = "src"

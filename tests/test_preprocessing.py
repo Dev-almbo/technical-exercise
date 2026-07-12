@@ -12,9 +12,9 @@ from src.train.preprocessing import (
 
 def test_split_and_encode_and_preprocess():
     raw = [
-        {"text": "Great product!::5"},
-        {"text": "Not good::2"},
-        {"text": "Okay::3"},
+        {"rating": 5.0, "text": "Great product!"},
+        {"rating": 2.0, "text": "Not good"},
+        {"rating": 3.0, "text": "Okay"},
     ]
     df = pd.DataFrame(raw)
     df = split_reviews_and_assign_rating(df)
@@ -30,7 +30,7 @@ def test_split_and_encode_and_preprocess():
 
 
 def test_load_json_reads_lines(tmp_path: Path):
-    data = [{"text": "A::1"}, {"text": "B::2"}]
+    data = [{"rating": 1.0, "text": "A"}, {"rating": 2.0, "text": "B"}]
     p = tmp_path / "sample.jsonl"
     with open(p, "w") as f:
         for item in data:
@@ -38,4 +38,4 @@ def test_load_json_reads_lines(tmp_path: Path):
 
     df = load_json(str(tmp_path), p.name)
     assert len(df) == 2
-    assert df.loc[0, "text"] == "A::1"
+    assert df.loc[0, "text"] == "A"
