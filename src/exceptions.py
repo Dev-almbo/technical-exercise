@@ -1,4 +1,4 @@
-class ConfigurationError(BaseException):
+class ConfigurationError(Exception):
     """Custom exception for configuration errors."""
 
     def __init__(self, message: str):
@@ -6,7 +6,7 @@ class ConfigurationError(BaseException):
         self.message = message
 
 
-class ModelError(BaseException):
+class ModelError(Exception):
     """Custom exception for model-related errors."""
 
     def __init__(self, message: str):
