@@ -209,3 +209,4 @@ tempCodeRunnerFile.py
 # Data
 data/raw/*.jsonl
 data/processed/*.parquet
+outputs/

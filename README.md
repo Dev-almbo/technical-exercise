@@ -21,7 +21,7 @@ Run via Kedro CLI
 
 ```bash
 cd ../technical-exercise
-uv run kedro run --pipeline training
+uv run kedro run --pipelines training
 ```
 
 ## Running the API locally

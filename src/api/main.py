@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
 from typing import Any, Optional
 import yaml
+import time
 
 from transformers import pipeline
 
@@ -59,6 +60,7 @@ async def root() -> RedirectResponse:
 
 @app.get("/predict", response_model=ModelResponse)
 async def predict(text: str) -> ModelResponse:
+    start = time.perf_counter()
     logger.info("Predict endpoint called with text: %s", text)
 
     last_error: Optional[Exception] = None
@@ -69,6 +71,8 @@ async def predict(text: str) -> ModelResponse:
                 raise HTTPException(status_code=503, detail="Model is not loaded")
             result = classifier(text)
             label = result[0]["label"]
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            logger.info("Prediction succeeded in %.2f ms", elapsed_ms)
             return ModelResponse(text=text, sentiment=str(label))
         except Exception as e:
             last_error = e
