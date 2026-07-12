@@ -1,1 +1,1 @@
-# technical-exercise
+# Technical Exercise
