@@ -13,13 +13,19 @@ dev = [
     "ty>=0.0.58",
 ]
 data = [
-    "pandas>=3.0.3",
-    "numpy>=1.25",
-    "transformers>=4.35.0",
+    "pandas>=2.0,<3",
+    "numpy>=1.25,<2",
+    "transformers>=4.46,<5",
+    "accelerate>=0.26.0",
     "datasets>=2.14.0",
     "evaluate>=0.4.0",
     "kedro>=1.5.0",
+    "kedro-datasets[pandas-parquetdataset]>=3.0.0",
     "scikit-learn>=1.9.0",
+    "torch>=2.2.0,<2.3",
+]
+api = [
+    "fastapi>=0.139.0",
 ]
 
 [tool.kedro]
@@ -27,3 +33,6 @@ package_name = "src"
 project_name = "technical-exercise"
 kedro_init_version = "1.5.0"
 source_dir = "."
+
+[tool.kedro_telemetry]
+project_id = "aa7bfe58357241a3b88e4a619dfd3dca"

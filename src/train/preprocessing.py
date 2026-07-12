@@ -35,9 +35,15 @@ def load_json(data_dir: str, file_name: str) -> pd.DataFrame:
 
 
 def split_reviews_and_assign_rating(data: pd.DataFrame) -> pd.DataFrame:
-    """Split reviews into separate columns for text and assign a rating."""
-    data[["review_text", "rating"]] = data["text"].str.split("::", expand=True)
-    data["rating"] = data["rating"].astype(int)
+    """Normalize the raw review schema.
+
+    The raw JSONL already provides separate ``rating`` and ``text`` fields, so
+    this step maps them onto the canonical ``review_text`` / ``rating`` columns
+    used by the rest of the pipeline and coerces the rating to an integer.
+    """
+    data = data.copy()
+    data["review_text"] = data["text"].astype(str)
+    data["rating"] = data["rating"].astype(float).round().astype(int)
     return data
 
 

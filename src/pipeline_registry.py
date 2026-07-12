@@ -1,7 +1,4 @@
-"""Project pipelines registry."""
-
 from typing import Dict
-
 from kedro.pipeline import Pipeline
 
 from pipelines.training.pipeline import create_pipeline as create_training_pipeline

@@ -1,11 +1,3 @@
-# Kedro Data Catalog
-#
-# Intermediate datasets produced by the training pipeline (raw_reviews,
-# split_reviews, clean_reviews, labeled_reviews) are kept in memory by default
-# (MemoryDataset), so they do not need to be declared here.
-#
-# Add entries here only when you want to persist a dataset to disk, e.g.:
-#
-# labeled_reviews:
-#   type: pandas.ParquetDataset
-#   filepath: data/processed/labeled_reviews.parquet
+labeled_reviews:
+  type: pandas.ParquetDataset
+  filepath: data/processed/labeled_reviews.parquet
