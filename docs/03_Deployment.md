@@ -6,6 +6,7 @@
 - Model is wrapped up in an asynchronous endpoint for concurrent processing of requests, so that one requests is not blocking the processing of other requests at the same time (as synchronous processing does) and the production system remains responsive reducing request latency
 - More efficient use of provided resources as one task does not block others.
 - For proper productionisation, there would be a need for more advanced error handling, and request input safety to not cause high amounts of errors production.
+- It should also have safe queuing, retry and rate limiting for services that are highly available and highly criticial (I've only tried to show here in which direction this could go.)
 
 ## Deployment on Cloud
 
