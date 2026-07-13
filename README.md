@@ -32,3 +32,5 @@ Disclaimer: Locally, the training is currently not very performant.
 cd ../technical-exercise
 uv run uvicorn src.api.main:app
 ```
+
+If you want to test the predictions, you can use the API docs redirect page.
