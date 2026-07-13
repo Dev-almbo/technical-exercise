@@ -25,7 +25,7 @@ Training and Preprocessing is wrapped into a Kedro pipeline.
 
 - There is model-agnostic data preprocessing steps that are contained in the kedro pipeline framework, since they should be shared. Otherwise, there is specific preprocessing for the hugging face trainer.
 
-- The model is pickled and saved locally for local deployment. For use in a cloud environment, the trainer must be extended to store all model artifacts in a model registry, e.g. MlFlow or Vertex AI model registry.
+- The model is saved locally for local deployment. For use in a cloud environment, the trainer must be extended to store all model artifacts in a model registry, e.g. MlFlow or Vertex AI model registry.
 
 ## Future Considerations
 

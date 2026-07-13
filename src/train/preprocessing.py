@@ -35,15 +35,21 @@ def load_json(data_dir: str, file_name: str) -> pd.DataFrame:
 
 
 def split_reviews_and_assign_rating(data: pd.DataFrame) -> pd.DataFrame:
-    """Normalize the raw review schema.
+    """Explode each review into one row per sentence, keeping the review's rating.
 
-    The raw JSONL already provides separate ``rating`` and ``text`` fields, so
-    this step maps them onto the canonical ``review_text`` / ``rating`` columns
-    used by the rest of the pipeline and coerces the rating to an integer.
+    Per the task spec, a multi-sentence review yields one training example per
+    sentence, each inheriting the review's star rating.
     """
     data = data.copy()
-    data["review_text"] = data["text"].astype(str)
     data["rating"] = data["rating"].astype(float).round().astype(int)
+
+    # split on sentence-ending punctuation, then explode to one row per sentence
+    data["review_text"] = data["text"].str.split(r"(?<=[.!?])\s+")
+    data = data.explode("review_text", ignore_index=True)
+
+    # tidy up and drop empty sentences
+    data["review_text"] = data["review_text"].str.strip()
+    data = data[data["review_text"].str.len() > 0].reset_index(drop=True)
     return data
 
 

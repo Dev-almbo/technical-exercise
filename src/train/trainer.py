@@ -11,6 +11,7 @@ from transformers import (
     AutoModelForSequenceClassification,
     TrainingArguments,
     Trainer as HfTrainer,
+    DataCollatorWithPadding,
 )
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,8 @@ class Trainer(ABC):
         raise NotImplementedError()
 
     def fit(self, *args, **kwargs) -> None:
+        """Single entry point the Kedro training node calls. Model-specific prep and training can be
+        coupled here so the whole step can be switched by swapping the trainer implementation."""
         raise NotImplementedError()
 
 
@@ -43,11 +46,7 @@ class HuggingFaceTrainer(Trainer):
 
     @staticmethod
     def _compute_metrics(pred) -> Dict[str, Optional[float]]:
-        """Compute metrics for model evaluation.
-
-        Passed directly to the HF Trainer. `pred` is an EvalPrediction-like
-        tuple of (predictions, label_ids) where predictions are logits.
-        """
+        """Compute metrics for model evaluation."""
         accuracy = evaluate.load("accuracy")
         f1 = evaluate.load("f1")
         logits, labels = pred
@@ -66,7 +65,7 @@ class HuggingFaceTrainer(Trainer):
     ]:
         """Model-specific data preparation for Hugging Face training.
 
-        This method onlyperforms the HF-specific steps: label-map construction,
+        This method only performs the HF-specific steps: label-map construction,
         train/val/test splitting and tokenization.
 
         Keeping this on the trainer makes the training node switchable: swap the
@@ -88,6 +87,9 @@ class HuggingFaceTrainer(Trainer):
         test_size = cfg.get("test_size", 0.1)
         val_size = cfg.get("val_size", 0.0)
 
+        max_length = int(cfg.get("max_length", 256))
+        num_proc = cfg.get("tokenizer_num_proc")
+
         df = data
 
         if text_col not in df.columns or label_col not in df.columns:
@@ -96,6 +98,7 @@ class HuggingFaceTrainer(Trainer):
             )
 
         def _build_label_maps(labels: pd.Series) -> Dict[str, int]:
+            """Convert label names to integers"""
             unique = sorted(labels.dropna().unique())
             return {label: i for i, label in enumerate(unique)}
 
@@ -126,13 +129,13 @@ class HuggingFaceTrainer(Trainer):
 
         tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-        def _tokenize(x):
-            return tokenizer(x[text_col], truncation=True)  # ty: ignore[call-non-callable]
+        def _tokenize(batch):
+            return tokenizer(batch[text_col], truncation=True, max_length=max_length)
 
-        train_ds = train_ds.map(_tokenize, batched=False)
-        test_ds = test_ds.map(_tokenize, batched=False)
+        train_ds = train_ds.map(_tokenize, batched=True, num_proc=num_proc)
+        test_ds = test_ds.map(_tokenize, batched=True, num_proc=num_proc)
         if val_ds is not None:
-            val_ds = val_ds.map(_tokenize, batched=False)
+            val_ds = val_ds.map(_tokenize, batched=True, num_proc=num_proc)
 
         keep_cols = ["input_ids", "attention_mask", "label"]
         train_ds = train_ds.remove_columns(
@@ -156,12 +159,7 @@ class HuggingFaceTrainer(Trainer):
         data: pd.DataFrame,
         config: Optional[dict] = None,
     ) -> None:
-        """Run model-specific preprocessing then train.
-
-        This is the single entry point the Kedro training node calls. It keeps
-        the model-specific prep and training coupled to the trainer so the whole
-        step can be switched by swapping the trainer implementation.
-        """
+        """Run model-specific preprocessing then train."""
         cfg = config or {}
         model_name = cfg.get("model_name_or_path") or "distilbert-base-uncased"
         output_dir = cfg.get("output_dir") or "outputs/model"
@@ -210,6 +208,7 @@ class HuggingFaceTrainer(Trainer):
             ),
             num_train_epochs=training_args_cfg.get("num_train_epochs", 3),
             save_strategy=training_args_cfg.get("save_strategy", "epoch"),
+            save_total_limit=training_args_cfg.get("save_total_limit", 1),
             logging_steps=training_args_cfg.get("logging_steps", 50),
             load_best_model_at_end=training_args_cfg.get(
                 "load_best_model_at_end", True
@@ -220,6 +219,10 @@ class HuggingFaceTrainer(Trainer):
             fp16=training_args_cfg.get("fp16", False),
         )
 
+        # dynamic per-batch padding is faster than padding every example to a
+        # global max length
+        data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+
         # instantiate HF Trainer and keep a reference on self for evaluate/predict
         self._hf_trainer = HfTrainer(
             model=model,
@@ -227,6 +230,7 @@ class HuggingFaceTrainer(Trainer):
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             processing_class=tokenizer,
+            data_collator=data_collator,
             compute_metrics=self._compute_metrics,
         )
 

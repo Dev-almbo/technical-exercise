@@ -12,7 +12,7 @@ from src.train.preprocessing import (
 
 def test_split_and_encode_and_preprocess():
     raw = [
-        {"rating": 5.0, "text": "Great product!"},
+        {"rating": 5.0, "text": "Great product! I loved it."},
         {"rating": 2.0, "text": "Not good"},
         {"rating": 3.0, "text": "Okay"},
     ]
@@ -20,13 +20,17 @@ def test_split_and_encode_and_preprocess():
     df = split_reviews_and_assign_rating(df)
     assert "review_text" in df.columns and "rating" in df.columns
 
-    df = preprocess_text(df)
-    assert df.loc[0, "review_text"] == "great product!"
+    # the first review has two sentences -> two rows, both rated 5
+    assert len(df) == 4
+    five_star = df[df["rating"] == 5]
+    assert set(five_star["review_text"]) == {"Great product!", "I loved it."}
 
+    df = preprocess_text(df)
     df = encode_rating_into_sentiment_labels(df)
-    assert df.loc[0, "sentiment"] == "positive"
-    assert df.loc[1, "sentiment"] == "negative"
-    assert df.loc[2, "sentiment"] == "neutral"
+    sentiments = dict(zip(df["review_text"], df["sentiment"]))
+    assert sentiments["great product!"] == "positive"
+    assert sentiments["not good"] == "negative"
+    assert sentiments["okay"] == "neutral"
 
 
 def test_load_json_reads_lines(tmp_path: Path):

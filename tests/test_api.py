@@ -1,9 +1,19 @@
 import asyncio
 
 import pytest
+from fastapi import HTTPException
 
 from src.api import main
-from src.exceptions import ModelError
+
+
+@pytest.fixture(autouse=True)
+def _fast_retries(monkeypatch):
+    """Avoid real backoff delays during retry tests."""
+
+    async def _no_sleep(_seconds):
+        return None
+
+    monkeypatch.setattr(main.asyncio, "sleep", _no_sleep)
 
 
 @pytest.fixture
@@ -13,10 +23,16 @@ def classifier():
     main.classifier = original
 
 
+def _request(text: str) -> main.PredictRequest:
+    return main.PredictRequest(text=text)
+
+
 def test_predict_raises_when_model_not_loaded(classifier):
     main.classifier = None
-    with pytest.raises(ModelError, match="Model is not loaded"):
-        asyncio.run(main.predict("some text"))
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(main.predict(_request("some text")))
+    assert exc.value.status_code == 503
+    assert exc.value.detail == "Model is not loaded"
 
 
 def test_predict_returns_sentiment(classifier):
@@ -30,7 +46,7 @@ def test_predict_returns_sentiment(classifier):
 
     main.classifier = capture
 
-    result = asyncio.run(main.predict("great book"))
+    result = asyncio.run(main.predict(_request("great book")))
 
     assert isinstance(received["value"], str)
     assert received["value"] == "great book"
@@ -50,7 +66,7 @@ def test_predict_retries_then_succeeds(classifier):
 
     main.classifier = flaky
 
-    result = asyncio.run(main.predict("bad book"))
+    result = asyncio.run(main.predict(_request("bad book")))
 
     assert calls["n"] == 2
     assert result.sentiment == "negative"
@@ -66,7 +82,8 @@ def test_predict_raises_after_exhausting_retries(classifier):
 
     main.classifier = always_fail
 
-    with pytest.raises(ModelError, match="Prediction failed after"):
-        asyncio.run(main.predict("anything"))
-
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(main.predict(_request("anything")))
+    assert exc.value.status_code == 503
+    assert "Prediction failed after" in str(exc.value.detail)
     assert calls["n"] == main.MAX_RETRIES

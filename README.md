@@ -24,6 +24,8 @@ cd ../technical-exercise
 uv run kedro run --pipelines training
 ```
 
+Disclaimer: Locally, the training is currently not very performant.
+
 ## Running the API locally
 
 ```bash

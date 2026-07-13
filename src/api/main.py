@@ -28,6 +28,10 @@ class ModelResponse(BaseModel):
     sentiment: str
 
 
+class PredictRequest(BaseModel):
+    text: str
+
+
 classifier: Optional[Any] = None
 
 
@@ -45,7 +49,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         )
     except Exception as e:  # pragma: no cover - startup diagnostics
         logger.error("Could not load model at startup: %s", e)
-        raise HTTPException(status_code=404, detail="Could not load model at startup")
+        # fail fast: an unloadable model should stop the app from starting
+        raise RuntimeError("Could not load model at startup") from e
     yield
 
 
@@ -58,17 +63,19 @@ async def root() -> RedirectResponse:
     return RedirectResponse(url="/docs")
 
 
-@app.get("/predict", response_model=ModelResponse)
-async def predict(text: str) -> ModelResponse:
+@app.post("/predict", response_model=ModelResponse)
+async def predict(request: PredictRequest) -> ModelResponse:
     start = time.perf_counter()
+    text = request.text
     logger.info("Predict endpoint called with text: %s", text)
+
+    if classifier is None:
+        raise HTTPException(status_code=503, detail="Model is not loaded")
 
     last_error: Optional[Exception] = None
     # attempt the prediction, retrying a specified number of times on transient errors
     for attempt in range(1, MAX_RETRIES + 1):
         try:
-            if classifier is None:
-                raise HTTPException(status_code=503, detail="Model is not loaded")
             result = classifier(text)
             label = result[0]["label"]
             elapsed_ms = (time.perf_counter() - start) * 1000
