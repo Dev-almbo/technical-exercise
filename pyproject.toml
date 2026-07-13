@@ -39,6 +39,3 @@ package_name = "src"
 project_name = "technical-exercise"
 kedro_init_version = "1.5.0"
 source_dir = "."
-
-[tool.kedro_telemetry]
-project_id = "aa7bfe58357241a3b88e4a619dfd3dca"

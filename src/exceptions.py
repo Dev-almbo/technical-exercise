@@ -1,3 +1,6 @@
+# Best practice is custom exceptions to really trace what went wrong were
+
+
 class ConfigurationError(Exception):
     """Custom exception for configuration errors."""
 

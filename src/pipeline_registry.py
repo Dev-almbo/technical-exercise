@@ -5,12 +5,7 @@ from pipelines.training.pipeline import create_pipeline as create_training_pipel
 
 
 def register_pipelines() -> Dict[str, Pipeline]:
-    """Register the project's pipelines.
-
-    Returns:
-        A mapping from pipeline names to ``Pipeline`` objects. The
-        ``__default__`` pipeline runs when no ``--pipeline`` flag is provided.
-    """
+    """Register the project's pipelines. Needed for successful kedro cli run."""
     training_pipeline = create_training_pipeline()
 
     return {
